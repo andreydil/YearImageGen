@@ -1,0 +1,179 @@
+﻿@model ImageSettingsModel
+@{
+    ViewData["Title"] = "Year image generator";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <h1>Year image generator</h1>
+    </div>
+</div>
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert alert-danger" role="alert">
+        @Model.Error
+    </div>
+}
+<form asp-action="Index" method="post">
+    <div class="form-group row">
+        <label for="numFirstYear" class="col-sm-3 col-form-label">First year</label>
+        <div class="col-sm-2">
+            <input id="numFirstYear" type="number" name="FirstYear" min="@int.MinValue" max="@int.MaxValue" class="form-control" value="@Model.FirstYear" />
+        </div>
+    </div>
+    <div class="form-group row">
+        <label for="numLastYear" class="col-sm-3 col-form-label">Last year</label>
+        <div class="col-sm-2">
+            <input id="numLastYear" type="number" name="LastYear" min="@int.MinValue" max="@int.MaxValue" class="form-control" value="@Model.LastYear" />
+        </div>
+    </div>
+    <div class="form-group row">
+        <label for="numWidth" class="col-sm-3 col-form-label">Image width</label>
+        <div class="col-sm-2">
+            <input id="numWidth" type="number" name="Width" min="1" max="1000000" class="form-control" value="@Model.Width" />
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-sm-3 col-form-label">Marked year spans:</label>
+    </div>
+    <div id="markedYears" class="form-group row" style="margin-left: 1em;">
+        @for (int i = 0; i < Model.MarkedYears.Count; ++i)
+        {
+            var yearSpan = Model.MarkedYears[i];
+            <label class="lblYearSpan col-sm-12 col-form-label" data-index="@i">@(i + 1). From @yearSpan.FirstYear to @yearSpan.LastYear colored @yearSpan.Color <span style="background-color: @yearSpan.Color">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <span class="btnRemoveYearSpan">[Remove]</span></label> 
+            <input class="newFirstYear" type="hidden" name="@(string.Format("MarkedYears[{0}].FirstYear", i))" value="@yearSpan.FirstYear" />
+            <input class="newLastYear" type="hidden" name="@(string.Format("MarkedYears[{0}].LastYear", i))" value="@yearSpan.LastYear" />
+            <input class="newColor" type="hidden" name="@(string.Format("MarkedYears[{0}].Color", i))" value="@yearSpan.Color" />
+        }
+    </div>
+    <div class="form-group row" style="margin-left: 1em;">
+        <label class="col-sm-3 col-form-label">Add marked year span from</label>
+        <div class="col-sm-2">
+            <input id="numNewFrom" type="number" class="form-control" />
+        </div>
+        to
+        <div class="col-sm-2">
+            <input id="numNewTo" type="number" class="form-control" />
+        </div>
+        colored
+        <div class="col-sm-2">
+            <input id="newYearSpanColorPicker" type="text" class="form-control" value="#ff0000" />
+        </div>
+        <div class="col-sm-2">
+            <button id="btnAddYearSpan" type="button" class="btn btn-secondary" disabled="disabled">Add</button>
+        </div>
+    </div>
+    <div class="container">
+        <div class="card border-dark mb-3">
+            <div class="card-header" id="advSettingsheading">
+                <h2 class="mb-0">
+                    <button type="button" class="btn btn-secondary" data-toggle="collapse" data-target="#advSettings" aria-expanded="false" aria-controls="collapseOne">
+                        More settings
+                    </button>
+                </h2>
+            </div>
+
+            <div id="advSettings" class="collapse" aria-labelledby="advSettingsheading">
+                <div class="card-body">
+                    <div class="form-group row">
+                        <label for="bgColorPicker" class="col-sm-3 col-form-label">Background color</label>
+                        <div class="col-sm-3">
+                            <input id="bgColorPicker" type="text" name="BackGroundColor" class="form-control" value="#ffffff" />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="drawnYearsColorPicker" class="col-sm-3 col-form-label">Drawn years color</label>
+                        <div class="col-sm-3">
+                            <input id="drawnYearsColorPicker" type="text" name="DrawnYearsColor" class="form-control" value="#d4d4d4" />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="zeroYearColorPicker" class="col-sm-3 col-form-label">Zero year color</label>
+                        <div class="col-sm-3">
+                            <input id="zeroYearColorPicker" type="text" name="ZeroYearColor" class="form-control" value="#000000" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <input type="submit" class="btn btn-primary" value="Download" />
+        </div>
+    </div>
+</form>
+
+@section Scripts
+{
+    <script>
+        $(function () {
+            $('#bgColorPicker').colorpicker();
+            $('#drawnYearsColorPicker').colorpicker();
+            $('#zeroYearColorPicker').colorpicker();
+            $('#newYearSpanColorPicker').colorpicker();
+
+            var $markedYears = $('#markedYears');
+            var $numNewFrom = $('#numNewFrom');
+            var $numNewTo = $('#numNewTo');
+            var $btnAddYearSpan = $('#btnAddYearSpan');
+
+            var disableBtnAddYearSpan = function () {
+                $btnAddYearSpan.attr('disabled', 'disabled');
+            }
+            var enableBtnAddYearSpan = function () {
+                $btnAddYearSpan.removeAttr('disabled');
+            }
+
+            $numNewFrom.on('change', function () {
+                if ($numNewFrom.val()) {
+                    enableBtnAddYearSpan();
+                } else {
+                    disableBtnAddYearSpan();
+                }
+            });
+            $numNewTo.on('change', function () {
+                if ($numNewTo.val()) {
+                    enableBtnAddYearSpan();
+                } else {
+                    disableBtnAddYearSpan();
+                }
+            });
+
+            $btnAddYearSpan.on('click', function () {
+                var firstYear = +$numNewFrom.val();
+                var lastYear = +$numNewTo.val();
+                if (firstYear > lastYear) {
+                    window.alert('Year From must be greater than or equal to year To');
+                    return;
+                }
+                var color = $('#newYearSpanColorPicker').val();
+                var numOfYearSpans = $('#markedYears label').length;
+                $markedYears.append('<label class="col-sm-12 col-form-label" data-index="' + numOfYearSpans + '">' + (numOfYearSpans + 2) + '. From ' + firstYear + ' to ' + lastYear + ' colored ' + color + ' <span style="background-color: ' + color + '">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <span class="btnRemoveYearSpan">[Remove]</span></label>');
+                $markedYears.append('<input type="hidden" name="MarkedYears[' + numOfYearSpans + '].FirstYear" value="' + firstYear + '" />');
+                $markedYears.append('<input type="hidden" name="MarkedYears[' + numOfYearSpans + '].LastYear" value="' + lastYear + '" />');
+                $markedYears.append('<input type="hidden" name="MarkedYears[' + numOfYearSpans + '].Color" value="' + color + '" />');
+                $numNewFrom.val('');
+                $numNewTo.val('');
+                disableBtnAddYearSpan();
+            });
+
+            $(document).on('click', '.btnRemoveYearSpan', function (e) {
+                var numOfYearSpans = $('#markedYears label').length;
+                var lbl = $(e.target).parent();
+                var index = +lbl.attr('data-index');
+                $('input[name="MarkedYears[' + index + '].FirstYear"]').remove();
+                $('input[name="MarkedYears[' + index + '].LastYear"]').remove();
+                $('input[name="MarkedYears[' + index + '].Color"]').remove();
+                lbl.remove();
+                for (var i = index + 1; i < numOfYearSpans; ++i) {
+                    $('label[data-index="' + i + '"]').attr('data-index', i - 1);
+                    $('input[name="MarkedYears[' + i + '].FirstYear"]').attr('name', 'MarkedYears[' + (i - 1) + '].FirstYear');
+                    $('input[name="MarkedYears[' + i + '].LastYear"]').attr('name', 'MarkedYears[' + (i - 1) + '].LastYear');
+                    $('input[name="MarkedYears[' + i + '].Color"]').attr('name', 'MarkedYears[' + (i - 1) + '].Color');
+                }
+            });
+        });
+    </script>
+}
